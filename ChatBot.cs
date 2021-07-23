@@ -24,8 +24,14 @@ namespace MaceBot
             client.OnChatCommandReceived += Client_OnChatCommandReceived;
             client.OnMessageSent += Client_OnMessageSent;
             client.OnRaidNotification += Client_OnRaidNotification;
+            client.OnBeingHosted += Client_OnBeingHosted;
          
             client.Connect();
+        }
+
+        private void Client_OnBeingHosted(object sender, OnBeingHostedArgs e)
+        {
+            client.SendMessage(e.BeingHostedNotification.Channel, $"Be sure to check out {e.BeingHostedNotification.HostedByChannel} at http://www.twitch.tv/{e.BeingHostedNotification.HostedByChannel}!");
         }
 
         private void Client_OnRaidNotification(object sender, OnRaidNotificationArgs e)
@@ -38,11 +44,15 @@ namespace MaceBot
             switch (e.Command.CommandText.ToLower())
             {
                 case "hibot":
-                    client.SendMessage(TwitchInfo.ChannelName, "hello viewer");
+                    client.SendMessage(TwitchInfo.ChannelName, $"hello {e.Command.ChatMessage.DisplayName}");
                     break;
 
                 case "roll":
                     RollDice();
+                    break;
+
+                case "lurk":
+                    client.SendMessage(TwitchInfo.ChannelName, $"Enjoy you lurk {e.Command.ChatMessage.DisplayName}");
                     break;
             }
         }
@@ -60,14 +70,18 @@ namespace MaceBot
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            Console.WriteLine($"{e.ChatMessage.Channel}: {e.ChatMessage.Message}");
+            Console.WriteLine($"{e.ChatMessage.DisplayName}: {e.ChatMessage.Message}");
             foreach (string word in words)
             {
-                if (e.ChatMessage.Message.Contains(word)) 
+                if (e.ChatMessage.Message.Contains(word))
                 {
                     client.DeleteMessage(e.ChatMessage.Channel, e.ChatMessage);
                     client.SendMessage(e.ChatMessage.Channel, "modCheck");
                 }
+            }
+            if (e.ChatMessage.Message.ToLower().Contains("goodnight"))
+            {
+                client.SendMessage(e.ChatMessage.Channel, $"GOODNIGHT {e.ChatMessage.DisplayName}!" );
             }
         }
 
@@ -79,7 +93,7 @@ namespace MaceBot
         private void RollDice()
         {
             var rand = new Random();
-            client.SendMessage(TwitchInfo.ChannelName , rand.Next(7).ToString());
+            client.SendMessage(TwitchInfo.ChannelName , rand.Next(1,7).ToString());
         }
 
         internal void Disconnect()
